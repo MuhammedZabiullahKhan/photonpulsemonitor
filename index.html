@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Heart Rate Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #0a0a1a;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            touch-action: manipulation;
+        }
+        
+        .container {
+            background: linear-gradient(145deg, #1a1a2e, #16213e);
+            border-radius: 28px;
+            padding: 24px 20px 30px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            text-align: center;
+            color: #e0e0ff;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #8888aa;
+            font-size: 0.8rem;
+            margin-bottom: 18px;
+        }
+        
+        .camera-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            background: #000;
+            border-radius: 18px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .overlay-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            text-align: center;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 12px 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(4px);
+            transition: opacity 0.3s;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #6ec6ff;
+            line-height: 1.2;
+        }
+        
+        .metric-value.bpm { color: #6ec6ff; }
+        .metric-value.quality { font-size: 1.4rem; }
+        .metric-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8888aa;
+            margin-top: 2px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+        
+        #startBtn {
+            background: linear-gradient(135deg, #00b894, #00a381);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 184, 148, 0.3);
+        }
+        
+        #startBtn:active { transform: scale(0.96); }
+        #startBtn:disabled {
+            opacity: 0.5;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        #stopBtn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+        
+        #stopBtn:active { transform: scale(0.96); }
+        #stopBtn:disabled {
+            opacity: 0.5;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .status {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #aaaacc;
+            text-align: center;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        
+        .status.success { color: #00b894; border-color: rgba(0, 184, 148, 0.15); }
+        .status.error { color: #ff6b6b; border-color: rgba(255, 107, 107, 0.15); }
+        .status.warning { color: #fdcb6e; border-color: rgba(253, 203, 110, 0.15); }
+        
+        .waveform-container {
+            margin: 12px 0 16px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        #waveform {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .footnote {
+            margin-top: 14px;
+            font-size: 0.65rem;
+            color: #555577;
+            text-align: center;
+            line-height: 1.5;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding-top: 14px;
+        }
+        
+        .flash-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0 14px;
+            color: #8888aa;
+            font-size: 0.8rem;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 28px;
+            background: #333355;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
+        
+        .toggle-switch.active { background: #00b894; }
+        .toggle-switch .knob {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        .toggle-switch.active .knob { left: 23px; }
+        
+        @media (max-width: 380px) {
+            .container { padding: 16px 14px 20px; }
+            .metric-value { font-size: 1.4rem; }
+            button { padding: 12px 16px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>❤️ Heart Rate Monitor</h1>
+        <p class="subtitle">Place fingertip on rear camera lens</p>
+        
+        <div class="camera-wrapper">
+            <video id="video" autoplay playsinline muted></video>
+            <div class="overlay-text" id="overlayText">📱 Place finger here</div>
+        </div>
+        
+        <div class="flash-toggle">
+            <span>🔦 Flash</span>
+            <div class="toggle-switch" id="flashToggle">
+                <div class="knob"></div>
+            </div>
+            <span id="flashStatus">Off</span>
+        </div>
+        
+        <div class="waveform-container">
+            <canvas id="waveform"></canvas>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value bpm" id="bpmDisplay">--</div>
+                <div class="metric-label">BPM</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value quality" id="qualityDisplay">⚪</div>
+                <div class="metric-label">Signal</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="confidenceDisplay" style="font-size:1.2rem;">--%</div>
+                <div class="metric-label">Confidence</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn">▶ Start</button>
+            <button id="stopBtn" disabled>⏹ Stop</button>
+        </div>
+        
+        <div class="status" id="statusMessage">Ready. Tap Start to begin.</div>
+        
+        <div class="footnote">
+            Scientific rPPG method • Optimized for mobile • 45-180 BPM range
+        </div>
+    </div>
+    
+    <script>
+        // ============================================================
+        //  FIXED: HEART RATE MONITOR WITH PROPER ERROR HANDLING
+        // ============================================================
+        
+        // --- DOM References ---
+        const video = document.getElementById('video');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const bpmDisplay = document.getElementById('bpmDisplay');
+        const qualityDisplay = document.getElementById('qualityDisplay');
+        const confidenceDisplay = document.getElementById('confidenceDisplay');
+        const statusMessage = document.getElementById('statusMessage');
+        const overlayText = document.getElementById('overlayText');
+        const flashToggle = document.getElementById('flashToggle');
+        const flashStatus = document.getElementById('flashStatus');
+        const waveformCanvas = document.getElementById('waveform');
+        const ctxWave = waveformCanvas.getContext('2d');
+        
+        // --- State ---
+        let isRunning = false;
+        let stream = null;
+        let canvas = null;
+        let ctx = null;
+        let animationId = null;
+        let signalBuffer = [];
+        let timestamps = [];
+        let bpmHistory = [];
+        let waveformData = [];
+        let frameCount = 0;
+        let flashEnabled = false;
+        let processingFrame = false;
+        let permissionGranted = false;
+        const MAX_WAVEFORM_POINTS = 200;
+        const TARGET_FPS = 30;
+        const ANALYSIS_WINDOW = 6;
+        const BPM_LOW = 45;
+        const BPM_HIGH = 180;
+        const MIN_PEAK_DISTANCE = 0.3;
+        
+        // --- CHECK: Is getUserMedia available? ---
+        function isGetUserMediaAvailable() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                return true;
+            }
+            
+            // Check for older prefixed versions
+            if (navigator.getUserMedia || navigator.webkitGetUserMedia || 
+                navigator.mozGetUserMedia || navigator.msGetUserMedia) {
+                return true;
+            }
+            
+            return false;
+        }
+        
+        // --- REQUEST CAMERA PERMISSION ---
+        async function requestCameraPermission() {
+            try {
+                // Check if getUserMedia is available
+                if (!isGetUserMediaAvailable()) {
+                    setStatus('❌ Camera API not supported. Please use HTTPS or a modern browser.', 'error');
+                    return false;
+                }
+                
+                setStatus('📷 Requesting camera permission...', '');
+                
+                // Try standard API first
+                const constraints = {
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 320 },
+                        height: { ideal: 240 }
+                    }
+                };
+                
+                const testStream = await navigator.mediaDevices.getUserMedia(constraints);
+                testStream.getTracks().forEach(track => track.stop());
+                permissionGranted = true;
+                setStatus('✅ Camera permission granted!', 'success');
+                return true;
+                
+            } catch (error) {
+                console.error('Permission error:', error);
+                permissionGranted = false;
+                
+                // Handle different error types
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    setStatus('❌ Camera permission denied. Please allow in settings.', 'error');
+                } else if (error.name === 'NotFoundError') {
+                    setStatus('❌ No camera found on this device.', 'error');
+                } else if (error.name === 'SecurityError') {
+                    setStatus('❌ Security error. Please use HTTPS (not file://)', 'error');
+                } else {
+                    setStatus(`❌ Camera error: ${error.message}`, 'error');
+                }
+                return false;
+            }
+        }
+        
+        // --- START CAMERA ---
+        async function setupCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 320, max: 480 },
+                        height: { ideal: 240, max: 360 },
+                        frameRate: { ideal: 30 }
+                    }
+                };
+                
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                await video.play();
+                
+                canvas = document.createElement('canvas');
+                canvas.width = 320;
+                canvas.height = 240;
+                ctx = canvas.getContext('2d');
+                
+                if (flashEnabled) await toggleFlash(true);
+                return true;
+                
+            } catch (err) {
+                console.error('Camera setup error:', err);
+                setStatus('❌ Camera error: ' + err.message, 'error');
+                return false;
+            }
+        }
+        
+        // --- BANDPASS FILTER ---
+        class BandpassFilter {
+            constructor(lowCut, highCut, fs) {
+                const wl = 2 * Math.PI * lowCut / fs;
+                const wh = 2 * Math.PI * highCut / fs;
+                const Q = 0.707;
+                const w0 = Math.sqrt(wl * wh);
+                const alpha = Math.sin(w0) / (2 * Q);
+                const cos_w0 = Math.cos(w0);
+                const a0 = 1 + alpha;
+                this.b0 = (alpha / a0);
+                this.b1 = 0;
+                this.b2 = (-alpha / a0);
+                this.a1 = (-2 * cos_w0 / a0);
+                this.a2 = ((1 - alpha) / a0);
+                this.x1 = 0;
+                this.x2 = 0;
+                this.y1 = 0;
+                this.y2 = 0;
+            }
+            
+            process(input) {
+                const output = this.b0 * input + this.b1 * this.x1 + this.b2 * this.x2 - this.a1 * this.y1 - this.a2 * this.y2;
+                this.x2 = this.x1;
+                this.x1 = input;
+                this.y2 = this.y1;
+                this.y1 = output;
+                return output;
+            }
+            
+            processArray(signal) {
+                this.x1 = 0;
+                this.x2 = 0;
+                this.y1 = 0;
+                this.y2 = 0;
+                const result = [];
+                for (let i = 0; i < signal.length; i++) {
+                    result.push(this.process(signal[i]));
+                }
+                return result;
+            }
+        }
+        
+        // --- PEAK DETECTION ---
+        function detectPeaks(signal, fps) {
+            if (signal.length < 30) return [];
+            const peaks = [];
+            const threshold = 0.3;
+            const minDistance = Math.floor(MIN_PEAK_DISTANCE * fps);
+            let sum = 0;
+            for (let i = 0; i < signal.length; i++) sum += signal[i];
+            const mean = sum / signal.length;
+            let sumSq = 0;
+            for (let i = 0; i < signal.length; i++) sumSq += (signal[i] - mean) * (signal[i] - mean);
+            const std = Math.sqrt(sumSq / signal.length);
+            const peakThreshold = mean + threshold * std;
+            
+            for (let i = 1; i < signal.length - 1; i++) {
+                if (signal[i] > peakThreshold && signal[i] > signal[i-1] && signal[i] > signal[i+1]) {
+                    if (peaks.length > 0) {
+                        const lastPeak = peaks[peaks.length - 1];
+                        if (i - lastPeak.index < minDistance) {
+                            if (signal[i] > signal[lastPeak.index]) {
+                                peaks[peaks.length - 1] = { index: i, value: signal[i] };
+                            }
+                            continue;
+                        }
+                    }
+                    peaks.push({ index: i, value: signal[i] });
+                }
+            }
+            return peaks;
+        }
+        
+        // --- CALCULATE BPM ---
+        function calculateBPMFromPeaks(peaks, fps) {
+            if (peaks.length < 3) return { bpm: null, confidence: 0 };
+            const intervals = [];
+            for (let i = 1; i < peaks.length; i++) {
+                intervals.push((peaks[i].index - peaks[i-1].index) / fps);
+            }
+            const validIntervals = intervals.filter(interval => interval >= 60/BPM_HIGH && interval <= 60/BPM_LOW);
+            if (validIntervals.length < 2) return { bpm: null, confidence: 0 };
+            const sorted = [...validIntervals].sort((a, b) => a - b);
+            const median = sorted[Math.floor(sorted.length / 2)];
+            const meanInterval = validIntervals.reduce((a, b) => a + b, 0) / validIntervals.length;
+            const variance = validIntervals.reduce((sum, val) => sum + (val - meanInterval) * (val - meanInterval), 0) / validIntervals.length;
+            const std = Math.sqrt(variance);
+            const cv = std / meanInterval;
+            let confidence = Math.max(0, 1 - cv * 5);
+            confidence = Math.min(1, confidence);
+            const bpm = 60 / median;
+            if (bpm >= BPM_LOW && bpm <= BPM_HIGH && confidence > 0.2) {
+                return { bpm, confidence };
+            }
+            return { bpm: null, confidence: 0 };
+        }
+        
+        // --- PROCESS FRAME ---
+        function processFrame() {
+            if (!isRunning || !canvas || !ctx || processingFrame) return;
+            processingFrame = true;
+            
+            try {
+                const w = canvas.width;
+                const h = canvas.height;
+                ctx.drawImage(video, 0, 0, w, h);
+                
+                const roiX = Math.floor(w * 0.30);
+                const roiY = Math.floor(h * 0.30);
+                const roiW = Math.floor(w * 0.40);
+                const roiH = Math.floor(h * 0.40);
+                
+                const imageData = ctx.getImageData(roiX, roiY, roiW, roiH);
+                const data = imageData.data;
+                
+                let sumGreen = 0;
+                let count = 0;
+                for (let i = 0; i < data.length; i += 4) {
+                    sumGreen += data[i + 1];
+                    count++;
+                }
+                const avgGreen = sumGreen / count;
+                
+                const now = performance.now();
+                signalBuffer.push(avgGreen);
+                timestamps.push(now);
+                
+                const maxSamples = TARGET_FPS * ANALYSIS_WINDOW * 2;
+                while (signalBuffer.length > maxSamples) {
+                    signalBuffer.shift();
+                    timestamps.shift();
+                }
+                
+                waveformData.push(avgGreen);
+                if (waveformData.length > MAX_WAVEFORM_POINTS) waveformData.shift();
+                drawWaveform();
+                frameCount++;
+                
+                if (frameCount % 15 === 0 && signalBuffer.length > TARGET_FPS * 2) {
+                    const timeSpan = timestamps[timestamps.length - 1] - timestamps[0];
+                    const actualFps = timestamps.length / (timeSpan / 1000);
+                    
+                    if (signalBuffer.length > TARGET_FPS * 2) {
+                        const filter = new BandpassFilter(BPM_LOW / 60, BPM_HIGH / 60, Math.min(actualFps, TARGET_FPS));
+                        const windowSize = Math.min(signalBuffer.length, Math.floor(TARGET_FPS * ANALYSIS_WINDOW));
+                        const startIdx = Math.max(0, signalBuffer.length - windowSize);
+                        const signalWindow = signalBuffer.slice(startIdx);
+                        const filtered = filter.processArray(signalWindow);
+                        
+                        const peaks = detectPeaks(filtered, Math.min(actualFps, TARGET_FPS));
+                        if (peaks.length >= 3) {
+                            const result = calculateBPMFromPeaks(peaks, Math.min(actualFps, TARGET_FPS));
+                            if (result.bpm !== null) {
+                                bpmHistory.push(result.bpm);
+                                if (bpmHistory.length > 10) bpmHistory.shift();
+                                const sortedBPM = [...bpmHistory].sort((a, b) => a - b);
+                                const smoothedBPM = sortedBPM[Math.floor(sortedBPM.length / 2)];
+                                updateDisplay(smoothedBPM, result.confidence);
+                            }
+                        }
+                        
+                        const quality = assessSignalQuality(filtered);
+                        updateQualityDisplay(quality);
+                    }
+                }
+            } catch (err) {
+                console.warn('Frame processing error:', err);
+            } finally {
+                processingFrame = false;
+            }
+            
+            animationId = requestAnimationFrame(processFrame);
+        }
+        
+        // --- SIGNAL QUALITY ---
+        function assessSignalQuality(signal) {
+            if (signal.length < 20) return { quality: 'low', score: 0 };
+            const mean = signal.reduce((a, b) => a + b, 0) / signal.length;
+            const variance = signal.reduce((sum, v) => sum + (v - mean) * (v - mean), 0) / signal.length;
+            const std = Math.sqrt(variance);
+            const min = Math.min(...signal);
+            const max = Math.max(...signal);
+            const amplitude = max - min;
+            let zeroCrossings = 0;
+            for (let i = 1; i < signal.length; i++) {
+                if ((signal[i] > 0 && signal[i-1] < 0) || (signal[i] < 0 && signal[i-1] > 0)) {
+                    zeroCrossings++;
+                }
+            }
+            const zcr = zeroCrossings / signal.length;
+            let score = 0;
+            if (std > 0.05) score += 0.2;
+            if (std > 0.1) score += 0.2;
+            if (amplitude > 0.2) score += 0.2;
+            if (amplitude > 0.5) score += 0.2;
+            if (zcr < 0.3) score += 0.2;
+            const quality = score > 0.6 ? 'high' : score > 0.35 ? 'medium' : 'low';
+            return { quality, score };
+        }
+        
+        // --- DRAW WAVEFORM ---
+        function drawWaveform() {
+            const parent = waveformCanvas.parentElement;
+            const width = parent.clientWidth || 300;
+            const height = parent.clientHeight || 60;
+            
+            waveformCanvas.width = width * window.devicePixelRatio;
+            waveformCanvas.height = height * window.devicePixelRatio;
+            waveformCanvas.style.width = width + 'px';
+            waveformCanvas.style.height = height + 'px';
+            ctxWave.scale(window.devicePixelRatio, window.devicePixelRatio);
+            
+            const w = width;
+            const h = height;
+            ctxWave.clearRect(0, 0, w, h);
+            
+            if (waveformData.length < 2) {
+                ctxWave.fillStyle = '#555577';
+                ctxWave.font = '14px sans-serif';
+                ctxWave.textAlign = 'center';
+                ctxWave.fillText('📈 Signal waveform', w/2, h/2 + 5);
+                return;
+            }
+            
+            const min = Math.min(...waveformData);
+            const max = Math.max(...waveformData);
+            const range = max - min || 1;
+            
+            ctxWave.beginPath();
+            ctxWave.strokeStyle = '#6ec6ff';
+            ctxWave.lineWidth = 2;
+            
+            for (let i = 0; i < waveformData.length; i++) {
+                const x = (i / waveformData.length) * w;
+                const y = h - ((waveformData[i] - min) / range) * (h - 4) - 2;
+                if (i === 0) ctxWave.moveTo(x, y);
+                else ctxWave.lineTo(x, y);
+            }
+            ctxWave.stroke();
+        }
+        
+        // --- UI UPDATES ---
+        function updateDisplay(bpm, confidence) {
+            bpmDisplay.textContent = Math.round(bpm);
+            confidenceDisplay.textContent = Math.round(confidence * 100) + '%';
+            setStatus(`❤️ ${Math.round(bpm)} BPM • ${Math.round(confidence * 100)}% confidence`, 'success');
+        }
+        
+        function updateQualityDisplay(quality) {
+            const emojis = { 'high': '🟢', 'medium': '🟡', 'low': '🔴' };
+            qualityDisplay.textContent = emojis[quality.quality] || '⚪';
+        }
+        
+        function setStatus(message, type = '') {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status' + (type ? ' ' + type : '');
+        }
+        
+        // --- FLASH CONTROL ---
+        async function toggleFlash(enabled) {
+            try {
+                if (enabled && stream) {
+                    const tracks = stream.getVideoTracks();
+                    if (tracks.length > 0) {
+                        const track = tracks[0];
+                        const capabilities = track.getCapabilities();
+                        if (capabilities.torch) {
+                            await track.applyConstraints({ advanced: [{ torch: true }] });
+                            flashEnabled = true;
+                            flashStatus.textContent = 'On';
+                            flashToggle.classList.add('active');
+                            return;
+                        }
+                    }
+                }
+                if (!enabled && stream) {
+                    const tracks = stream.getVideoTracks();
+                    if (tracks.length > 0) {
+                        const track = tracks[0];
+                        const capabilities = track.getCapabilities();
+                        if (capabilities.torch) {
+                            await track.applyConstraints({ advanced: [{ torch: false }] });
+                        }
+                    }
+                }
+                flashEnabled = enabled;
+                flashStatus.textContent = enabled ? 'On' : 'Off';
+                flashToggle.classList.toggle('active', enabled);
+            } catch (err) {
+                console.warn('Flash control not supported:', err);
+                flashStatus.textContent = 'Unavailable';
+                flashToggle.classList.remove('active');
+            }
+        }
+        
+        // --- START MONITORING ---
+        async function startMonitoring() {
+            if (isRunning) return;
+            
+            // Check if getUserMedia is available
+            if (!isGetUserMediaAvailable()) {
+                setStatus('❌ Camera not supported. Please use HTTPS or modern browser.', 'error');
+                startBtn.disabled = false;
+                return;
+            }
+            
+            // Request permission
+            if (!permissionGranted) {
+                startBtn.disabled = true;
+                const granted = await requestCameraPermission();
+                if (!granted) {
+                    startBtn.disabled = false;
+                    return;
+                }
+            }
+            
+            // Setup camera
+            startBtn.disabled = true;
+            setStatus('📷 Starting camera...');
+            
+            const cameraReady = await setupCamera();
+            if (!cameraReady) {
+                startBtn.disabled = false;
+                return;
+            }
+            
+            // Reset buffers
+            signalBuffer = [];
+            timestamps = [];
+            waveformData = [];
+            bpmHistory = [];
+            frameCount = 0;
+            overlayText.style.opacity = '0';
+            isRunning = true;
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            setStatus('📊 Analyzing... Place finger on camera lens', '');
+            processingFrame = false;
+            processFrame();
+        }
+        
+        // --- STOP MONITORING ---
+        async function stopMonitoring() {
+            isRunning = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            video.srcObject = null;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            overlayText.style.opacity = '1';
+            if (flashEnabled) {
+                flashEnabled = false;
+                flashToggle.classList.remove('active');
+                flashStatus.textContent = 'Off';
+            }
+            setStatus('⏹ Stopped');
+        }
+        
+        // --- EVENT LISTENERS ---
+        startBtn.addEventListener('click', startMonitoring);
+        stopBtn.addEventListener('click', stopMonitoring);
+        
+        flashToggle.addEventListener('click', async function() {
+            if (isRunning) await toggleFlash(!flashEnabled);
+            else {
+                flashEnabled = !flashEnabled;
+                flashStatus.textContent = flashEnabled ? 'On' : 'Off';
+                flashToggle.classList.toggle('active', flashEnabled);
+            }
+        });
+        
+        // --- CLEANUP ---
+        window.addEventListener('beforeunload', function() {
+            if (isRunning) stopMonitoring();
+        });
+        window.addEventListener('resize', drawWaveform);
+        
+        // --- INIT ---
+        setStatus('📱 Tap Start. Camera permission will be requested.', '');
+        stopBtn.disabled = true;
+        setTimeout(drawWaveform, 100);
+        
+        // Check if getUserMedia is available on load
+        if (!isGetUserMediaAvailable()) {
+            setStatus('❌ Camera API not available. Please use a modern browser with HTTPS.', 'error');
+            startBtn.disabled = true;
+        }
+        
+        console.log('❤️ Heart Rate Monitor - Fixed Version');
+        console.log('✅ getUserMedia available:', isGetUserMediaAvailable());
+        console.log('📱 Tap Start to request camera permission');
+    </script>
+</body>
+</html>
