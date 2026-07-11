@@ -1107,7 +1107,7 @@
         function _detectRedFinger(r, g, b) {
             const total = r + g + b;
             const redPercent = total > 0 ? (r / total) * 100 : 0;
-            const isRed = redPercent > 80;
+            const isRed = redPercent > 60;
             return { detected: isRed, redPercent: redPercent };
         }
 
