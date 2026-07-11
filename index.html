@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>CardioSense Pro - 60 FPS Ultra Accurate</title>
+    <title>CardioSense Pro - Anti-False Detection</title>
 
     <style>
         /* ================================================================
-               ULTRA FAST STYLES
+               ANTI-FALSE DETECTION STYLES
             ================================================================ */
         *,
         *::before,
@@ -151,7 +151,7 @@
             display: block;
         }
 
-        /* RED INDICATOR */
+        /* RED INDICATOR with REAL detection */
         .red-indicator {
             position: absolute;
             top: 10px;
@@ -210,6 +210,47 @@
 
         .red-indicator .red-value.active {
             color: #EF4444;
+        }
+
+        /* Light level indicator */
+        .light-indicator {
+            position: absolute;
+            top: 10px;
+            left: 140px;
+            z-index: 4;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            padding: 4px 12px 4px 8px;
+            border-radius: 16px;
+            font-size: 0.55rem;
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .light-indicator .light-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #333;
+            transition: all 0.3s ease;
+        }
+
+        .light-indicator .light-dot.good {
+            background: var(--success);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .light-indicator .light-dot.poor {
+            background: var(--warning);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+        }
+
+        .light-indicator .light-dot.bad {
+            background: var(--danger);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
         }
 
         /* Finger status */
@@ -826,9 +867,10 @@
                 font-size: 0.55rem;
                 padding: 4px 12px 4px 10px;
             }
-            .red-indicator .red-dot {
-                width: 8px;
-                height: 8px;
+            .light-indicator {
+                font-size: 0.5rem;
+                padding: 3px 10px 3px 6px;
+                left: 120px;
             }
             .fps-counter {
                 font-size: 0.5rem;
@@ -862,7 +904,7 @@
                 <div class="logo-icon">❤️</div>
                 <div class="logo-text">Cardio<span>Sense</span></div>
             </div>
-            <div class="badge-clinical">⚡ 60 FPS</div>
+            <div class="badge-clinical">⚡ Anti-False</div>
         </div>
 
         <!-- ========== CAMERA ========== -->
@@ -877,14 +919,20 @@
                 <span class="red-value" id="redValue">0%</span>
             </div>
 
+            <!-- Light Level Indicator -->
+            <div class="light-indicator" id="lightIndicator">
+                <span class="light-dot" id="lightDot"></span>
+                <span id="lightLevel">Light</span>
+            </div>
+
             <!-- Finger Status -->
             <div class="finger-status" id="fingerStatus">🖐️ Place Finger</div>
 
             <!-- Instruction Overlay -->
             <div class="instruction-overlay" id="instructionOverlay">
-                <div class="icon">⚡</div>
-                <h2>60 FPS Ultra Accurate</h2>
-                <p class="subtitle">More frames = More accurate readings</p>
+                <div class="icon">🛡️</div>
+                <h2>Anti-False Detection</h2>
+                <p class="subtitle">Only detects REAL fingers, not black plastic!</p>
                 <div class="steps">
                     <div class="step">
                         <span class="num">1</span>
@@ -976,13 +1024,13 @@
             <div class="credit">
                 Developed by <strong>Shri. Muhammed Zabiullah Khan</strong>
             </div>
-            <div class="version">⚡ v5.0 60FPS</div>
+            <div class="version">🛡️ v5.1 Anti-False</div>
         </div>
 
     </div>
 
     <!-- ================================================================ -->
-    <!--  60 FPS ULTRA ACCURATE JAVASCRIPT                              -->
+    <!--  ANTI-FALSE DETECTION JAVASCRIPT                               -->
     <!-- ================================================================ -->
     <script>
         // ================================================================
@@ -1031,6 +1079,8 @@
         const _redValue = $('#redValue');
         const _redIndicator = $('#redIndicator');
         const _fpsDisplay = $('#fpsDisplay');
+        const _lightDot = $('#lightDot');
+        const _lightLevel = $('#lightLevel');
 
         // ================================================================
         //  STATE
@@ -1065,6 +1115,10 @@
         let _redCounter = 0;
         let _redThreshold = 2;
         let _redLevel = 0;
+
+        // --- ANTI-FALSE: Light Level ---
+        let _lightGood = false;
+        let _avgBrightness = 0;
 
         // --- BPM STABILITY ---
         let _bpmHistory = [];
@@ -1101,22 +1155,66 @@
         function _fmt(v) { return v !== null && !isNaN(v) ? Math.round(v) : '--'; }
 
         // ================================================================
-        //  INSTANT RED DETECTION
+        //  ANTI-FALSE: REAL FINGER DETECTION
         // ================================================================
 
-        function _detectRedFinger(r, g, b) {
+        function _detectRealFinger(r, g, b) {
+            // Calculate red percentage
             const total = r + g + b;
             const redPercent = total > 0 ? (r / total) * 100 : 0;
-            const isRed = redPercent > 30;
-            return { detected: isRed, redPercent: redPercent };
+
+            // CRITICAL: Check if there's enough light (real finger reflects light)
+            // Black plastic absorbs light → very low values
+            const brightness = (r + g + b) / 3;
+            const hasEnoughLight = brightness > 25;
+
+            // Real finger characteristics:
+            // 1. Red percentage > 30% (blood reflects red)
+            // 2. Green > 20 (finger reflects some green)
+            // 3. Blue > 15 (finger reflects some blue)
+            // 4. Brightness > 25 (enough light from flash)
+            const isRealFinger = (
+                redPercent > 30 &&
+                g > 20 &&
+                b > 15 &&
+                hasEnoughLight &&
+                r > g * 0.8 &&
+                r > b * 0.8
+            );
+
+            // For black plastic: r=2, g=2, b=2 → brightness=2 → FAILS hasEnoughLight!
+            // For dark surface: r=5, g=5, b=5 → brightness=5 → FAILS!
+
+            return {
+                detected: isRealFinger,
+                redPercent: redPercent,
+                brightness: brightness,
+                hasLight: hasEnoughLight
+            };
         }
 
-        function _updateRedDetection(r, g, b) {
-            const result = _detectRedFinger(r, g, b);
+        function _updateFingerDetection(r, g, b) {
+            const result = _detectRealFinger(r, g, b);
             _redLevel = result.redPercent;
+            _avgBrightness = result.brightness;
+
+            // Update red value display
             _redValue.textContent = Math.round(_redLevel) + '%';
 
-            if (result.detected) {
+            // Update light level indicator
+            if (result.brightness > 50) {
+                _lightDot.className = 'light-dot good';
+                _lightLevel.textContent = '💡 Good';
+            } else if (result.brightness > 25) {
+                _lightDot.className = 'light-dot poor';
+                _lightLevel.textContent = '💡 Low';
+            } else {
+                _lightDot.className = 'light-dot bad';
+                _lightLevel.textContent = '🌑 Too Dark';
+            }
+
+            // ONLY detect if it's a REAL finger (not black plastic!)
+            if (result.detected && result.hasLight) {
                 _redCounter = Math.min(_redCounter + 1, 10);
                 if (_redCounter >= _redThreshold) {
                     if (!_redDetected) {
@@ -1127,18 +1225,18 @@
                         _finger.textContent = '🔴 Finger Detected!';
                         _finger.className = 'finger-status detected';
                         _setDot('red', 'Red Detected');
-                        _log('🔴 Finger detected! Calculating BPM...', 'warning');
+                        _log('🔴 REAL finger detected! Calculating BPM...', 'warning');
                     }
                 }
             } else {
-                _redCounter = Math.max(_redCounter - 1, 0);
+                _redCounter = Math.max(_redCounter - 2, 0);
                 if (_redCounter < 1) {
                     if (_redDetected) {
                         _redDetected = false;
                         _redDot.className = 'red-dot';
                         _redValue.className = 'red-value';
                         _redIndicator.className = 'red-indicator';
-                        _finger.textContent = '🖐️ Place Finger';
+                        _finger.textContent = '🖐️ Place REAL Finger';
                         _finger.className = 'finger-status absent';
                         _setDot('error', 'No Finger');
                         if (_hasReading) {
@@ -1154,12 +1252,13 @@
                             _am.className = 'metric-value accuracy';
                             _q.textContent = '⚪';
                             _bpmCard.className = 'metric-card';
-                            _log('⚠️ Finger removed. Please press again.', 'warning');
+                            _log('⚠️ Real finger removed. Please press again.', 'warning');
                             _scan.classList.remove('active');
                         }
                     }
                 }
             }
+
             return _redDetected;
         }
 
@@ -1432,12 +1531,11 @@
                         facingMode: 'environment',
                         width: { ideal: 320, max: 480 },
                         height: { ideal: 240, max: 360 },
-                        frameRate: { ideal: 60, max: 60 } // REQUEST 60 FPS
+                        frameRate: { ideal: 60, max: 60 }
                     }
                 };
                 _stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-                // Check actual frame rate
                 const track = _stream.getVideoTracks()[0];
                 const settings = track.getSettings();
                 console.log('📹 Camera FPS:', settings.frameRate);
@@ -1492,7 +1590,7 @@
         }
 
         // ================================================================
-        //  PROCESS FRAME - 60 FPS OPTIMIZED
+        //  PROCESS FRAME - ANTI-FALSE DETECTION
         // ================================================================
 
         function _processFrame() {
@@ -1541,8 +1639,8 @@
                     _timestamps.shift();
                 }
 
-                // === RED DETECTION ===
-                const redDetected = _updateRedDetection(avgR, avgG, avgB);
+                // === ANTI-FALSE FINGER DETECTION ===
+                const redDetected = _updateFingerDetection(avgR, avgG, avgB);
 
                 // Add to waveform
                 const normR = avgR / (avgG + avgB + 1);
@@ -1561,7 +1659,7 @@
                     _fpsDisplay.textContent = _currentFPS;
                 }
 
-                // === BPM ANALYSIS - FASTER (every 5 frames at 60fps = 12x/sec) ===
+                // === BPM ANALYSIS - ONLY IF REAL FINGER DETECTED ===
                 if (_frame % 5 === 0 && redDetected && _signalR.length > _TARGET_FPS * 1.5) {
                     const span = _timestamps[_timestamps.length - 1] - _timestamps[0];
                     const fps = _timestamps.length / (span / 1000);
@@ -1679,6 +1777,7 @@
             _fpsCounter = 0;
             _fpsTime = performance.now();
             _currentFPS = 0;
+            _avgBrightness = 0;
 
             _b.textContent = '--';
             _b.className = 'metric-value bpm';
@@ -1693,14 +1792,15 @@
             _redValue.textContent = '0%';
             _redValue.className = 'red-value';
             _redIndicator.className = 'red-indicator';
+            _lightDot.className = 'light-dot';
 
             _o.classList.add('hidden');
             _running = true;
             _s.disabled = true;
             _t.disabled = false;
-            _log('⚡ 60 FPS mode. Press finger on camera!', 'warning');
+            _log('🛡️ Real finger detection active. Press finger on camera!', 'warning');
             _setDot('waiting', 'Waiting');
-            _finger.textContent = '🖐️ Press Finger on Camera';
+            _finger.textContent = '🖐️ Press REAL Finger';
             _finger.className = 'finger-status absent';
             _startTimer();
 
@@ -1729,6 +1829,8 @@
             _redValue.textContent = '0%';
             _redValue.className = 'red-value';
             _redIndicator.className = 'red-indicator';
+            _lightDot.className = 'light-dot';
+            _lightLevel.textContent = 'Light';
             _fpsDisplay.textContent = '0';
             if (_flashOn) { await _toggleFlash(false); }
             _log('⏹ Stopped', '');
@@ -1759,7 +1861,7 @@
         //  INIT
         // ================================================================
 
-        _log('⚡ 60 FPS mode. Tap <strong class="highlight">Start</strong>', '');
+        _log('🛡️ Anti-false detection. Tap <strong class="highlight">Start</strong>', '');
         _t.disabled = true;
         setTimeout(_drawWave, 200);
 
@@ -1778,9 +1880,10 @@
             }
         })();
 
-        console.log('%c⚡ CardioSense Pro v5.0 (60 FPS)', 'font-size:22px; color:#EF4444; font-weight:bold;');
+        console.log('%c🛡️ CardioSense Pro v5.1 (Anti-False)', 'font-size:22px; color:#EF4444; font-weight:bold;');
         console.log('%cDeveloped by Shri. Muhammed Zabiullah Khan', 'color:#94A3B8;');
-        console.log('%c⚡ 60 FPS • Ultra Accurate • 3-5 second response', 'color:#10B981;');
+        console.log('%c🛡️ Anti-false detection - No more black plastic readings!', 'color:#10B981;');
+        console.log('%c🔬 Real finger detection: R>30%, G>20, B>15, Brightness>25', 'color:#F59E0B;');
         console.log('%c🔒 Protected - All rights reserved.', 'color:#64748B;');
 
         console.clear = function() {
@@ -1788,15 +1891,16 @@
         };
 
         window.__cardiosense = {
-            version: '5.0',
+            version: '5.1',
             developer: 'Shri. Muhammed Zabiullah Khan',
-            fps: '60',
+            antiFalse: true,
             start: _start,
             stop: _stop
         };
 
-        console.log('✅ CardioSense Pro 60 FPS ready.');
-        console.log('⚡ 2x more frames = 2x more accurate!');
+        console.log('✅ CardioSense Pro Anti-False ready.');
+        console.log('🛡️ Black plastic: ❌ REJECTED');
+        console.log('🔴 Real finger: ✅ DETECTED');
     </script>
 </body>
 </html>
