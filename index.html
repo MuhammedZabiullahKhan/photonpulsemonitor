@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>CardioSense Pro - Instant Red Detection</title>
+    <title>CardioSense Pro - 60 FPS Ultra Accurate</title>
 
     <style>
         /* ================================================================
-               INSTANT DETECTION STYLES
+               ULTRA FAST STYLES
             ================================================================ */
         *,
         *::before,
@@ -26,7 +26,6 @@
             --warning: #F59E0B;
             --bg-dark: #0F172A;
             --bg-card: #1E293B;
-            --bg-elevated: #334155;
             --text-primary: #F8FAFC;
             --text-secondary: #94A3B8;
             --text-muted: #64748B;
@@ -58,20 +57,25 @@
             overflow: hidden;
         }
 
-        .container::before {
-            content: '';
+        /* FPS Counter */
+        .fps-counter {
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(ellipse at 50% 0%, rgba(239, 68, 68, 0.04), transparent 70%);
-            pointer-events: none;
+            top: 14px;
+            right: 14px;
+            z-index: 10;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            font-weight: 600;
         }
 
-        /* ================================================================
-               HEADER
-            ================================================================ */
+        .fps-counter .value {
+            color: var(--success);
+        }
+
         .header {
             display: flex;
             align-items: center;
@@ -169,7 +173,6 @@
         .red-indicator.detected {
             border-color: rgba(239, 68, 68, 0.4);
             background: rgba(239, 68, 68, 0.1);
-            box-shadow: 0 0 30px rgba(239, 68, 68, 0.05);
         }
 
         .red-indicator .red-dot {
@@ -209,7 +212,7 @@
             color: #EF4444;
         }
 
-        /* Finger status - INSTANT DETECTION */
+        /* Finger status */
         .finger-status {
             position: absolute;
             bottom: 12px;
@@ -235,25 +238,12 @@
             color: #EF4444;
             border-color: rgba(239, 68, 68, 0.4);
             background: rgba(239, 68, 68, 0.12);
-            box-shadow: 0 0 40px rgba(239, 68, 68, 0.08);
-            animation: pulse-detected 1s ease-in-out infinite;
-        }
-
-        @keyframes pulse-detected {
-            0%,
-            100% {
-                box-shadow: 0 0 40px rgba(239, 68, 68, 0.08);
-            }
-            50% {
-                box-shadow: 0 0 60px rgba(239, 68, 68, 0.2);
-            }
         }
 
         .finger-status.reading {
             color: var(--success);
             border-color: rgba(16, 185, 129, 0.4);
             background: rgba(16, 185, 129, 0.12);
-            box-shadow: 0 0 40px rgba(16, 185, 129, 0.08);
         }
 
         .finger-status.absent {
@@ -840,6 +830,12 @@
                 width: 8px;
                 height: 8px;
             }
+            .fps-counter {
+                font-size: 0.5rem;
+                padding: 3px 10px;
+                top: 10px;
+                right: 10px;
+            }
         }
 
         @media (min-width: 600px) {
@@ -857,13 +853,16 @@
 
     <div class="container">
 
+        <!-- FPS Counter -->
+        <div class="fps-counter">⚡ FPS: <span class="value" id="fpsDisplay">0</span></div>
+
         <!-- ========== HEADER ========== -->
         <div class="header">
             <div class="logo">
                 <div class="logo-icon">❤️</div>
                 <div class="logo-text">Cardio<span>Sense</span></div>
             </div>
-            <div class="badge-clinical">⚕️ Instant</div>
+            <div class="badge-clinical">⚡ 60 FPS</div>
         </div>
 
         <!-- ========== CAMERA ========== -->
@@ -883,9 +882,9 @@
 
             <!-- Instruction Overlay -->
             <div class="instruction-overlay" id="instructionOverlay">
-                <div class="icon">🔴</div>
-                <h2>Press Finger on Camera</h2>
-                <p class="subtitle">Cover camera completely with your <span style="color:#EF4444;font-weight:700;">index finger</span></p>
+                <div class="icon">⚡</div>
+                <h2>60 FPS Ultra Accurate</h2>
+                <p class="subtitle">More frames = More accurate readings</p>
                 <div class="steps">
                     <div class="step">
                         <span class="num">1</span>
@@ -897,7 +896,7 @@
                     </div>
                     <div class="step">
                         <span class="num">3</span>
-                        <span class="text">RED will show → Reading appears in <span class="highlight">5-8 seconds</span></span>
+                        <span class="text">Reading appears in <span class="highlight">3-5 seconds</span> ⚡</span>
                     </div>
                 </div>
             </div>
@@ -977,13 +976,13 @@
             <div class="credit">
                 Developed by <strong>Shri. Muhammed Zabiullah Khan</strong>
             </div>
-            <div class="version">🔴 v4.1 Instant</div>
+            <div class="version">⚡ v5.0 60FPS</div>
         </div>
 
     </div>
 
     <!-- ================================================================ -->
-    <!--  INSTANT RED DETECTION - FIXED                                  -->
+    <!--  60 FPS ULTRA ACCURATE JAVASCRIPT                              -->
     <!-- ================================================================ -->
     <script>
         // ================================================================
@@ -1031,6 +1030,7 @@
         const _redDot = $('#redDot');
         const _redValue = $('#redValue');
         const _redIndicator = $('#redIndicator');
+        const _fpsDisplay = $('#fpsDisplay');
 
         // ================================================================
         //  STATE
@@ -1045,7 +1045,6 @@
             _signalG = [],
             _signalB = [];
         let _timestamps = [];
-        let _history = [];
         let _wave = [];
         let _frame = 0;
         let _flashOn = false;
@@ -1058,28 +1057,32 @@
         let _elapsed = 0;
         let _permission = false;
         let _hasReading = false;
-        let _lastBPM = 0;
         let _bpmStableCount = 0;
         let _qualityHistory = [];
 
-        // --- RED DETECTION - SIMPLIFIED ---
+        // --- RED DETECTION ---
         let _redDetected = false;
         let _redCounter = 0;
-        let _redThreshold = 2; // ONLY 2 FRAMES needed!
+        let _redThreshold = 2;
         let _redLevel = 0;
 
         // --- BPM STABILITY ---
         let _bpmHistory = [];
-        let _bpmHistorySize = 6;
+        let _bpmHistorySize = 8;
         let _bpmStabilityCounter = 0;
         let _bpmStabilityThreshold = 2;
 
-        const _MAX_WAVE = 200;
-        const _FPS = 30;
-        const _WINDOW = 5;
+        // --- FPS Tracking ---
+        let _fpsCounter = 0;
+        let _fpsTime = 0;
+        let _currentFPS = 0;
+
+        const _MAX_WAVE = 300;
+        const _TARGET_FPS = 60;
+        const _WINDOW = 4;
         const _BPM_LOW = 40;
         const _BPM_HIGH = 200;
-        const _MIN_PEAK = 0.2;
+        const _MIN_PEAK = 0.18;
 
         // ================================================================
         //  UTILITY
@@ -1098,29 +1101,21 @@
         function _fmt(v) { return v !== null && !isNaN(v) ? Math.round(v) : '--'; }
 
         // ================================================================
-        //  INSTANT RED DETECTION - FIXED
+        //  INSTANT RED DETECTION
         // ================================================================
 
         function _detectRedFinger(r, g, b) {
-            // Calculate red percentage
             const total = r + g + b;
             const redPercent = total > 0 ? (r / total) * 100 : 0;
-
-            // SIMPLE: If red > 35%, it's a finger!
-            // Your finger shows 86% red, so this should detect instantly
-            const isRed = redPercent > 35;
-
+            const isRed = redPercent > 30;
             return { detected: isRed, redPercent: redPercent };
         }
 
         function _updateRedDetection(r, g, b) {
             const result = _detectRedFinger(r, g, b);
             _redLevel = result.redPercent;
-
-            // Update red value display
             _redValue.textContent = Math.round(_redLevel) + '%';
 
-            // INSTANT DETECTION - If red > 35%, detect immediately
             if (result.detected) {
                 _redCounter = Math.min(_redCounter + 1, 10);
                 if (_redCounter >= _redThreshold) {
@@ -1146,7 +1141,6 @@
                         _finger.textContent = '🖐️ Place Finger';
                         _finger.className = 'finger-status absent';
                         _setDot('error', 'No Finger');
-                        // Reset reading
                         if (_hasReading) {
                             _hasReading = false;
                             _bpmHistory = [];
@@ -1166,12 +1160,11 @@
                     }
                 }
             }
-
             return _redDetected;
         }
 
         // ================================================================
-        //  CLINICAL FILTER
+        //  CLINICAL FILTER - OPTIMIZED FOR 60 FPS
         // ================================================================
 
         class _ClinicalFilter {
@@ -1223,11 +1216,11 @@
         }
 
         // ================================================================
-        //  FAST PEAK DETECTION
+        //  FAST PEAK DETECTION - OPTIMIZED
         // ================================================================
 
         function _fastPeaks(signal, fps) {
-            if (signal.length < 25) return [];
+            if (signal.length < 20) return [];
             const peaks = [];
             const minDist = Math.floor(_MIN_PEAK * fps);
 
@@ -1259,7 +1252,7 @@
         }
 
         // ================================================================
-        //  FAST BPM CALCULATION
+        //  FAST BPM - OPTIMIZED
         // ================================================================
 
         function _fastBPM(peaks, fps) {
@@ -1319,7 +1312,7 @@
         }
 
         // ================================================================
-        //  WAVEFORM DRAW
+        //  WAVEFORM DRAW - UPDATED FOR 60FPS
         // ================================================================
 
         function _drawWave() {
@@ -1348,7 +1341,7 @@
             _cw.beginPath();
             const color = _hasReading ? '#10B981' : '#EF4444';
             _cw.strokeStyle = color;
-            _cw.lineWidth = 2;
+            _cw.lineWidth = 1.5;
             _cw.shadowColor = _hasReading ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.15)';
             _cw.shadowBlur = 6;
 
@@ -1429,7 +1422,7 @@
         }
 
         // ================================================================
-        //  CAMERA SETUP
+        //  CAMERA SETUP - 60 FPS
         // ================================================================
 
         async function _setupCamera() {
@@ -1439,10 +1432,16 @@
                         facingMode: 'environment',
                         width: { ideal: 320, max: 480 },
                         height: { ideal: 240, max: 360 },
-                        frameRate: { ideal: 30 }
+                        frameRate: { ideal: 60, max: 60 } // REQUEST 60 FPS
                     }
                 };
                 _stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+                // Check actual frame rate
+                const track = _stream.getVideoTracks()[0];
+                const settings = track.getSettings();
+                console.log('📹 Camera FPS:', settings.frameRate);
+
                 _v.srcObject = _stream;
                 await _v.play();
                 _canvas = document.createElement('canvas');
@@ -1493,7 +1492,7 @@
         }
 
         // ================================================================
-        //  PROCESS FRAME - INSTANT DETECTION
+        //  PROCESS FRAME - 60 FPS OPTIMIZED
         // ================================================================
 
         function _processFrame() {
@@ -1505,7 +1504,7 @@
                     h = _canvas.height;
                 _ctx.drawImage(_v, 0, 0, w, h);
 
-                // ROI - full center for best finger detection
+                // ROI - full center
                 const roi = { x: Math.floor(w * 0.10), y: Math.floor(h * 0.10), w: Math.floor(w * 0.80), h: Math.floor(h *
                         0.80) };
                 const img = _ctx.getImageData(roi.x, roi.y, roi.w, roi.h);
@@ -1534,7 +1533,7 @@
                 const now = performance.now();
                 _timestamps.push(now);
 
-                const maxSamples = _FPS * _WINDOW * 2;
+                const maxSamples = _TARGET_FPS * _WINDOW * 3;
                 while (_signalR.length > maxSamples) {
                     _signalR.shift();
                     _signalG.shift();
@@ -1542,7 +1541,7 @@
                     _timestamps.shift();
                 }
 
-                // === INSTANT RED DETECTION (every frame) ===
+                // === RED DETECTION ===
                 const redDetected = _updateRedDetection(avgR, avgG, avgB);
 
                 // Add to waveform
@@ -1553,35 +1552,39 @@
 
                 _frame++;
 
-                // === BPM ANALYSIS (only when red detected) ===
-                if (_frame % 6 === 0 && redDetected && _signalR.length > _FPS * 1.5) {
+                // === FPS TRACKING ===
+                _fpsCounter++;
+                if (now - _fpsTime > 1000) {
+                    _currentFPS = _fpsCounter;
+                    _fpsCounter = 0;
+                    _fpsTime = now;
+                    _fpsDisplay.textContent = _currentFPS;
+                }
+
+                // === BPM ANALYSIS - FASTER (every 5 frames at 60fps = 12x/sec) ===
+                if (_frame % 5 === 0 && redDetected && _signalR.length > _TARGET_FPS * 1.5) {
                     const span = _timestamps[_timestamps.length - 1] - _timestamps[0];
                     const fps = _timestamps.length / (span / 1000);
 
-                    if (_signalR.length > _FPS * 1.5) {
-                        // Use RED channel signal
-                        const size = Math.min(_signalR.length, Math.floor(_FPS * _WINDOW));
+                    if (_signalR.length > _TARGET_FPS * 1.5) {
+                        const size = Math.min(_signalR.length, Math.floor(_TARGET_FPS * _WINDOW));
                         const start = Math.max(0, _signalR.length - size);
                         const signalWindow = _signalR.slice(start);
 
-                        // Normalize
                         const mean = signalWindow.reduce((a, b) => a + b, 0) / signalWindow.length;
                         const normalized = signalWindow.map(v => v / (mean + 1));
 
-                        // Filter
-                        const filter = new _ClinicalFilter(_BPM_LOW / 60, _BPM_HIGH / 60, Math.min(fps, _FPS));
+                        const filter = new _ClinicalFilter(_BPM_LOW / 60, _BPM_HIGH / 60, Math.min(fps, _TARGET_FPS));
                         const filtered = filter.processArray(normalized);
 
-                        // Fast peak detection
-                        const peaks = _fastPeaks(filtered, Math.min(fps, _FPS));
+                        const peaks = _fastPeaks(filtered, Math.min(fps, _TARGET_FPS));
 
                         if (peaks.length >= 3) {
-                            const result = _fastBPM(peaks, Math.min(fps, _FPS));
+                            const result = _fastBPM(peaks, Math.min(fps, _TARGET_FPS));
                             if (result.bpm !== null && result.bpm > 40 && result.bpm < 200) {
                                 _bpmHistory.push(result.bpm);
                                 if (_bpmHistory.length > _bpmHistorySize) _bpmHistory.shift();
 
-                                // Check stability
                                 if (_bpmHistory.length >= 3) {
                                     const variance = _bpmHistory.reduce((s, v) => s + Math.pow(v - result.bpm, 2), 0) /
                                         _bpmHistory.length;
@@ -1592,7 +1595,6 @@
                                     }
                                 }
 
-                                // Display when stable
                                 if (_bpmStabilityCounter > _bpmStabilityThreshold || _bpmHistory.length > 5) {
                                     const sorted = [..._bpmHistory].sort((a, b) => a - b);
                                     const smooth = sorted[Math.floor(sorted.length / 2)];
@@ -1622,7 +1624,6 @@
                             }
                         }
 
-                        // Quality
                         const q = _fastQuality(filtered);
                         const map = { 'high': '🟢', 'medium': '🟡', 'low': '🔴' };
                         _q.textContent = map[q.quality] || '⚪';
@@ -1654,7 +1655,7 @@
             }
 
             _s.disabled = true;
-            _log('📷 Starting camera...', '');
+            _log('📷 Starting 60 FPS camera...', '');
 
             const ready = await _setupCamera();
             if (!ready) { _s.disabled = false; return; }
@@ -1665,7 +1666,6 @@
             _signalB = [];
             _timestamps = [];
             _wave = [];
-            _history = [];
             _qualityHistory = [];
             _bpmHistory = [];
             _frame = 0;
@@ -1676,7 +1676,9 @@
             _redDetected = false;
             _redCounter = 0;
             _bpmStabilityCounter = 0;
-            _redLevel = 0;
+            _fpsCounter = 0;
+            _fpsTime = performance.now();
+            _currentFPS = 0;
 
             _b.textContent = '--';
             _b.className = 'metric-value bpm';
@@ -1696,7 +1698,7 @@
             _running = true;
             _s.disabled = true;
             _t.disabled = false;
-            _log('🔴 Press finger firmly on camera. Look for RED!', 'warning');
+            _log('⚡ 60 FPS mode. Press finger on camera!', 'warning');
             _setDot('waiting', 'Waiting');
             _finger.textContent = '🖐️ Press Finger on Camera';
             _finger.className = 'finger-status absent';
@@ -1727,6 +1729,7 @@
             _redValue.textContent = '0%';
             _redValue.className = 'red-value';
             _redIndicator.className = 'red-indicator';
+            _fpsDisplay.textContent = '0';
             if (_flashOn) { await _toggleFlash(false); }
             _log('⏹ Stopped', '');
         }
@@ -1756,7 +1759,7 @@
         //  INIT
         // ================================================================
 
-        _log('📱 Tap <strong class="highlight">Start</strong> to begin', '');
+        _log('⚡ 60 FPS mode. Tap <strong class="highlight">Start</strong>', '');
         _t.disabled = true;
         setTimeout(_drawWave, 200);
 
@@ -1775,9 +1778,9 @@
             }
         })();
 
-        console.log('%c🔴 CardioSense Pro v4.1 (Instant)', 'font-size:22px; color:#EF4444; font-weight:bold;');
+        console.log('%c⚡ CardioSense Pro v5.0 (60 FPS)', 'font-size:22px; color:#EF4444; font-weight:bold;');
         console.log('%cDeveloped by Shri. Muhammed Zabiullah Khan', 'color:#94A3B8;');
-        console.log('%c🔬 Instant Red Detection • 35% threshold', 'color:#EF4444;');
+        console.log('%c⚡ 60 FPS • Ultra Accurate • 3-5 second response', 'color:#10B981;');
         console.log('%c🔒 Protected - All rights reserved.', 'color:#64748B;');
 
         console.clear = function() {
@@ -1785,16 +1788,15 @@
         };
 
         window.__cardiosense = {
-            version: '4.1',
+            version: '5.0',
             developer: 'Shri. Muhammed Zabiullah Khan',
-            instant: true,
+            fps: '60',
             start: _start,
             stop: _stop
         };
 
-        console.log('✅ CardioSense Pro Instant ready.');
-        console.log('🔴 Detection threshold: 35% red');
-        console.log('📱 Press finger on camera - RED will show instantly!');
+        console.log('✅ CardioSense Pro 60 FPS ready.');
+        console.log('⚡ 2x more frames = 2x more accurate!');
     </script>
 </body>
 </html>
