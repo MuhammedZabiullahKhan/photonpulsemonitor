@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>CardioSense Pro - Red Channel Focus</title>
+    <title>CardioSense Pro - Instant Red Detection</title>
 
     <style>
         /* ================================================================
-               FAST & ACCURATE STYLES
+               INSTANT DETECTION STYLES
             ================================================================ */
         *,
         *::before,
@@ -147,7 +147,7 @@
             display: block;
         }
 
-        /* RED INDICATOR - Shows when red is detected */
+        /* RED INDICATOR */
         .red-indicator {
             position: absolute;
             top: 10px;
@@ -156,14 +156,20 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(4px);
-            padding: 4px 14px 4px 10px;
-            border-radius: 16px;
-            font-size: 0.65rem;
+            padding: 6px 16px 6px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
             color: var(--text-secondary);
             border: 1px solid rgba(255, 255, 255, 0.05);
             transition: all 0.3s ease;
+        }
+
+        .red-indicator.detected {
+            border-color: rgba(239, 68, 68, 0.4);
+            background: rgba(239, 68, 68, 0.1);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.05);
         }
 
         .red-indicator .red-dot {
@@ -196,46 +202,58 @@
             font-weight: 700;
             color: var(--text-muted);
             transition: color 0.3s ease;
+            min-width: 40px;
         }
 
         .red-indicator .red-value.active {
             color: #EF4444;
         }
 
-        /* Finger status */
+        /* Finger status - INSTANT DETECTION */
         .finger-status {
             position: absolute;
             bottom: 12px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 4;
-            padding: 6px 16px;
+            padding: 8px 20px;
             border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 600;
+            font-size: 0.75rem;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(4px);
             border: 1px solid rgba(255, 255, 255, 0.06);
-            transition: all 0.5s ease;
+            transition: all 0.3s ease;
             color: var(--text-muted);
-            min-width: 180px;
+            min-width: 200px;
             text-align: center;
         }
 
         .finger-status.detected {
             color: #EF4444;
-            border-color: rgba(239, 68, 68, 0.3);
-            background: rgba(239, 68, 68, 0.08);
-            box-shadow: 0 0 30px rgba(239, 68, 68, 0.05);
+            border-color: rgba(239, 68, 68, 0.4);
+            background: rgba(239, 68, 68, 0.12);
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.08);
+            animation: pulse-detected 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse-detected {
+            0%,
+            100% {
+                box-shadow: 0 0 40px rgba(239, 68, 68, 0.08);
+            }
+            50% {
+                box-shadow: 0 0 60px rgba(239, 68, 68, 0.2);
+            }
         }
 
         .finger-status.reading {
             color: var(--success);
-            border-color: rgba(16, 185, 129, 0.3);
-            background: rgba(16, 185, 129, 0.08);
-            box-shadow: 0 0 30px rgba(16, 185, 129, 0.05);
+            border-color: rgba(16, 185, 129, 0.4);
+            background: rgba(16, 185, 129, 0.12);
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.08);
         }
 
         .finger-status.absent {
@@ -425,8 +443,8 @@
         }
         .status-dot .dot.red {
             background: #EF4444;
-            box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
-            animation: dot-pulse 0.8s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+            animation: dot-pulse 0.6s ease-in-out infinite;
         }
         @keyframes dot-pulse {
             0%,
@@ -811,12 +829,12 @@
             }
             .finger-status {
                 font-size: 0.6rem;
-                padding: 4px 10px;
-                min-width: 140px;
+                padding: 5px 12px;
+                min-width: 150px;
             }
             .red-indicator {
                 font-size: 0.55rem;
-                padding: 3px 10px 3px 8px;
+                padding: 4px 12px 4px 10px;
             }
             .red-indicator .red-dot {
                 width: 8px;
@@ -845,7 +863,7 @@
                 <div class="logo-icon">❤️</div>
                 <div class="logo-text">Cardio<span>Sense</span></div>
             </div>
-            <div class="badge-clinical">⚕️ Red Focus</div>
+            <div class="badge-clinical">⚕️ Instant</div>
         </div>
 
         <!-- ========== CAMERA ========== -->
@@ -867,7 +885,7 @@
             <div class="instruction-overlay" id="instructionOverlay">
                 <div class="icon">🔴</div>
                 <h2>Press Finger on Camera</h2>
-                <p class="subtitle">You should see <span style="color:#EF4444;font-weight:700;">RED</span> on screen</p>
+                <p class="subtitle">Cover camera completely with your <span style="color:#EF4444;font-weight:700;">index finger</span></p>
                 <div class="steps">
                     <div class="step">
                         <span class="num">1</span>
@@ -879,7 +897,7 @@
                     </div>
                     <div class="step">
                         <span class="num">3</span>
-                        <span class="text">Wait <span class="highlight">5-10 seconds</span> for reading</span>
+                        <span class="text">RED will show → Reading appears in <span class="highlight">5-8 seconds</span></span>
                     </div>
                 </div>
             </div>
@@ -959,13 +977,13 @@
             <div class="credit">
                 Developed by <strong>Shri. Muhammed Zabiullah Khan</strong>
             </div>
-            <div class="version">🔴 v4.0 Red Focus</div>
+            <div class="version">🔴 v4.1 Instant</div>
         </div>
 
     </div>
 
     <!-- ================================================================ -->
-    <!--  RED-CHANNEL FOCUSED JAVASCRIPT - FAST & ACCURATE              -->
+    <!--  INSTANT RED DETECTION - FIXED                                  -->
     <!-- ================================================================ -->
     <script>
         // ================================================================
@@ -1012,6 +1030,7 @@
         const _bpmCard = $('#bpmCard');
         const _redDot = $('#redDot');
         const _redValue = $('#redValue');
+        const _redIndicator = $('#redIndicator');
 
         // ================================================================
         //  STATE
@@ -1043,23 +1062,21 @@
         let _bpmStableCount = 0;
         let _qualityHistory = [];
 
-        // --- RED-CHANNEL DETECTION ---
+        // --- RED DETECTION - SIMPLIFIED ---
         let _redDetected = false;
         let _redCounter = 0;
-        let _redThreshold = 5; // Frames of red needed
-        let _redHistory = [];
-        let _redHistorySize = 10;
+        let _redThreshold = 2; // ONLY 2 FRAMES needed!
         let _redLevel = 0;
 
         // --- BPM STABILITY ---
         let _bpmHistory = [];
-        let _bpmHistorySize = 8;
+        let _bpmHistorySize = 6;
         let _bpmStabilityCounter = 0;
-        let _bpmStabilityThreshold = 3;
+        let _bpmStabilityThreshold = 2;
 
         const _MAX_WAVE = 200;
         const _FPS = 30;
-        const _WINDOW = 6;
+        const _WINDOW = 5;
         const _BPM_LOW = 40;
         const _BPM_HIGH = 200;
         const _MIN_PEAK = 0.2;
@@ -1081,28 +1098,19 @@
         function _fmt(v) { return v !== null && !isNaN(v) ? Math.round(v) : '--'; }
 
         // ================================================================
-        //  RED-CHANNEL FINGER DETECTION - FAST & ACCURATE
+        //  INSTANT RED DETECTION - FIXED
         // ================================================================
 
         function _detectRedFinger(r, g, b) {
-            // When finger is pressed on camera, RED dominates
-            // Blood absorbs green/blue, reflects red
-            const redRatio = r / (g + b + 1);
-            const redPercent = (r / (r + g + b + 1)) * 100;
+            // Calculate red percentage
+            const total = r + g + b;
+            const redPercent = total > 0 ? (r / total) * 100 : 0;
 
-            // Finger detection conditions:
-            // 1. Red must be > 40% of total
-            // 2. Red/Green ratio > 1.0
-            // 3. Red/Blue ratio > 1.0
-            // 4. Enough brightness (not dark)
-            const isRed = (
-                redPercent > 35 &&
-                r > g * 1.1 &&
-                r > b * 1.1 &&
-                r > 30 && g > 20 && b > 20
-            );
+            // SIMPLE: If red > 35%, it's a finger!
+            // Your finger shows 86% red, so this should detect instantly
+            const isRed = redPercent > 35;
 
-            return { detected: isRed, redPercent: redPercent, redRatio: redRatio };
+            return { detected: isRed, redPercent: redPercent };
         }
 
         function _updateRedDetection(r, g, b) {
@@ -1110,61 +1118,52 @@
             _redLevel = result.redPercent;
 
             // Update red value display
-            _redValue.textContent = Math.round(result.redPercent) + '%';
-            _redValue.className = 'red-value' + (result.detected ? ' active' : '');
+            _redValue.textContent = Math.round(_redLevel) + '%';
 
-            // Add to history
-            _redHistory.push(result.detected);
-            if (_redHistory.length > _redHistorySize) {
-                _redHistory.shift();
-            }
-
-            // Count detections in history
-            const detections = _redHistory.filter(f => f === true).length;
-            const ratio = detections / _redHistory.length;
-
-            // Require > 50% detection rate for red detection
-            const isRedStable = ratio > 0.5;
-
-            if (isRedStable) {
-                _redCounter = Math.min(_redCounter + 1, _redThreshold + 3);
+            // INSTANT DETECTION - If red > 35%, detect immediately
+            if (result.detected) {
+                _redCounter = Math.min(_redCounter + 1, 10);
                 if (_redCounter >= _redThreshold) {
-                    _redDetected = true;
+                    if (!_redDetected) {
+                        _redDetected = true;
+                        _redDot.className = 'red-dot active';
+                        _redValue.className = 'red-value active';
+                        _redIndicator.className = 'red-indicator detected';
+                        _finger.textContent = '🔴 Finger Detected!';
+                        _finger.className = 'finger-status detected';
+                        _setDot('red', 'Red Detected');
+                        _log('🔴 Finger detected! Calculating BPM...', 'warning');
+                    }
                 }
             } else {
-                _redCounter = Math.max(_redCounter - 2, 0);
-                if (_redCounter < _redThreshold - 2) {
-                    _redDetected = false;
-                }
-            }
-
-            // Update UI
-            if (_redDetected) {
-                _redDot.className = 'red-dot active';
-                _finger.textContent = '🔴 Finger Detected!';
-                _finger.className = 'finger-status detected';
-                _setDot('red', 'Red Detected');
-            } else {
-                _redDot.className = 'red-dot';
-                _finger.textContent = '🖐️ Press Finger on Camera';
-                _finger.className = 'finger-status absent';
-                _setDot('error', 'No Finger');
-                // Reset reading
-                if (_hasReading) {
-                    _hasReading = false;
-                    _bpmHistory = [];
-                    _bpmStabilityCounter = 0;
-                    _b.textContent = '--';
-                    _b.className = 'metric-value bpm';
-                    _c.textContent = '--%';
-                    _c.className = 'metric-value confidence';
-                    _a.textContent = '--%';
-                    _am.textContent = '--%';
-                    _am.className = 'metric-value accuracy';
-                    _q.textContent = '⚪';
-                    _bpmCard.className = 'metric-card';
-                    _log('⚠️ Finger removed. Please press again.', 'warning');
-                    _scan.classList.remove('active');
+                _redCounter = Math.max(_redCounter - 1, 0);
+                if (_redCounter < 1) {
+                    if (_redDetected) {
+                        _redDetected = false;
+                        _redDot.className = 'red-dot';
+                        _redValue.className = 'red-value';
+                        _redIndicator.className = 'red-indicator';
+                        _finger.textContent = '🖐️ Place Finger';
+                        _finger.className = 'finger-status absent';
+                        _setDot('error', 'No Finger');
+                        // Reset reading
+                        if (_hasReading) {
+                            _hasReading = false;
+                            _bpmHistory = [];
+                            _bpmStabilityCounter = 0;
+                            _b.textContent = '--';
+                            _b.className = 'metric-value bpm';
+                            _c.textContent = '--%';
+                            _c.className = 'metric-value confidence';
+                            _a.textContent = '--%';
+                            _am.textContent = '--%';
+                            _am.className = 'metric-value accuracy';
+                            _q.textContent = '⚪';
+                            _bpmCard.className = 'metric-card';
+                            _log('⚠️ Finger removed. Please press again.', 'warning');
+                            _scan.classList.remove('active');
+                        }
+                    }
                 }
             }
 
@@ -1224,11 +1223,11 @@
         }
 
         // ================================================================
-        //  PEAK DETECTION - FAST
+        //  FAST PEAK DETECTION
         // ================================================================
 
         function _fastPeaks(signal, fps) {
-            if (signal.length < 30) return [];
+            if (signal.length < 25) return [];
             const peaks = [];
             const minDist = Math.floor(_MIN_PEAK * fps);
 
@@ -1494,7 +1493,7 @@
         }
 
         // ================================================================
-        //  PROCESS FRAME - RED FOCUSED
+        //  PROCESS FRAME - INSTANT DETECTION
         // ================================================================
 
         function _processFrame() {
@@ -1506,9 +1505,9 @@
                     h = _canvas.height;
                 _ctx.drawImage(_v, 0, 0, w, h);
 
-                // ROI - focused on center where finger presses
-                const roi = { x: Math.floor(w * 0.15), y: Math.floor(h * 0.15), w: Math.floor(w * 0.70), h: Math.floor(h *
-                        0.70) };
+                // ROI - full center for best finger detection
+                const roi = { x: Math.floor(w * 0.10), y: Math.floor(h * 0.10), w: Math.floor(w * 0.80), h: Math.floor(h *
+                        0.80) };
                 const img = _ctx.getImageData(roi.x, roi.y, roi.w, roi.h);
                 const data = img.data;
 
@@ -1543,10 +1542,10 @@
                     _timestamps.shift();
                 }
 
-                // === RED DETECTION (every frame for fast response) ===
+                // === INSTANT RED DETECTION (every frame) ===
                 const redDetected = _updateRedDetection(avgR, avgG, avgB);
 
-                // Add to waveform (use RED channel for better visualization)
+                // Add to waveform
                 const normR = avgR / (avgG + avgB + 1);
                 _wave.push(normR);
                 if (_wave.length > _MAX_WAVE) _wave.shift();
@@ -1554,18 +1553,18 @@
 
                 _frame++;
 
-                // === FAST BPM ANALYSIS (only when red detected) ===
-                if (_frame % 8 === 0 && redDetected && _signalR.length > _FPS * 1.5) {
+                // === BPM ANALYSIS (only when red detected) ===
+                if (_frame % 6 === 0 && redDetected && _signalR.length > _FPS * 1.5) {
                     const span = _timestamps[_timestamps.length - 1] - _timestamps[0];
                     const fps = _timestamps.length / (span / 1000);
 
                     if (_signalR.length > _FPS * 1.5) {
-                        // Use RED channel signal (best for blood flow)
+                        // Use RED channel signal
                         const size = Math.min(_signalR.length, Math.floor(_FPS * _WINDOW));
                         const start = Math.max(0, _signalR.length - size);
                         const signalWindow = _signalR.slice(start);
 
-                        // Normalize by ambient
+                        // Normalize
                         const mean = signalWindow.reduce((a, b) => a + b, 0) / signalWindow.length;
                         const normalized = signalWindow.map(v => v / (mean + 1));
 
@@ -1594,7 +1593,7 @@
                                 }
 
                                 // Display when stable
-                                if (_bpmStabilityCounter > _bpmStabilityThreshold || _bpmHistory.length > 6) {
+                                if (_bpmStabilityCounter > _bpmStabilityThreshold || _bpmHistory.length > 5) {
                                     const sorted = [..._bpmHistory].sort((a, b) => a - b);
                                     const smooth = sorted[Math.floor(sorted.length / 2)];
 
@@ -1617,7 +1616,7 @@
                                         'success');
                                     _setDot('active', `${_fmt(_bpm)} BPM`);
                                     _scan.classList.add('active');
-                                    _finger.textContent = '✅ Reading: ' + _fmt(_bpm) + ' BPM';
+                                    _finger.textContent = '✅ ' + _fmt(_bpm) + ' BPM';
                                     _finger.className = 'finger-status reading';
                                 }
                             }
@@ -1669,7 +1668,6 @@
             _history = [];
             _qualityHistory = [];
             _bpmHistory = [];
-            _redHistory = [];
             _frame = 0;
             _bpm = 0;
             _conf = 0;
@@ -1692,6 +1690,7 @@
             _redDot.className = 'red-dot';
             _redValue.textContent = '0%';
             _redValue.className = 'red-value';
+            _redIndicator.className = 'red-indicator';
 
             _o.classList.add('hidden');
             _running = true;
@@ -1727,6 +1726,7 @@
             _redDot.className = 'red-dot';
             _redValue.textContent = '0%';
             _redValue.className = 'red-value';
+            _redIndicator.className = 'red-indicator';
             if (_flashOn) { await _toggleFlash(false); }
             _log('⏹ Stopped', '');
         }
@@ -1775,9 +1775,9 @@
             }
         })();
 
-        console.log('%c🔴 CardioSense Pro v4.0 (Red Focus)', 'font-size:22px; color:#EF4444; font-weight:bold;');
+        console.log('%c🔴 CardioSense Pro v4.1 (Instant)', 'font-size:22px; color:#EF4444; font-weight:bold;');
         console.log('%cDeveloped by Shri. Muhammed Zabiullah Khan', 'color:#94A3B8;');
-        console.log('%c🔬 Red-Channel Detection • Fast & Accurate', 'color:#EF4444;');
+        console.log('%c🔬 Instant Red Detection • 35% threshold', 'color:#EF4444;');
         console.log('%c🔒 Protected - All rights reserved.', 'color:#64748B;');
 
         console.clear = function() {
@@ -1785,14 +1785,16 @@
         };
 
         window.__cardiosense = {
-            version: '4.0',
+            version: '4.1',
             developer: 'Shri. Muhammed Zabiullah Khan',
-            redFocus: true,
+            instant: true,
             start: _start,
             stop: _stop
         };
 
-        console.log('✅ CardioSense Pro Red Focus ready.');
+        console.log('✅ CardioSense Pro Instant ready.');
+        console.log('🔴 Detection threshold: 35% red');
+        console.log('📱 Press finger on camera - RED will show instantly!');
     </script>
 </body>
 </html>
